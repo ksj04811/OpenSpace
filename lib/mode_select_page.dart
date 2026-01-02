@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
-import 'map_search_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'tutorial_page.dart'; // 🔥 새로 만들 튜토리얼 페이지
 
 class ModeSelectPage extends StatelessWidget {
   const ModeSelectPage({super.key});
+
+  /// 최초 실행 여부 저장
+  Future<void> _saveFirstRunComplete(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstRun', false);
+
+    // 튜토리얼 페이지로 이동
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const TutorialPage(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +45,7 @@ class ModeSelectPage extends StatelessWidget {
                     textStyle: const TextStyle(fontSize: 22),
                   ),
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MapSearchPage(),
-                      ),
-                    );
+                    _saveFirstRunComplete(context);
                   },
                   child: const Text('시각장애인 모드'),
                 ),
