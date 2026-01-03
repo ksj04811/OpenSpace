@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../map_search_page.dart';
+import '../home/map_search_page.dart';
 
 class TutorialPageLast extends StatelessWidget {
   const TutorialPageLast({super.key});
