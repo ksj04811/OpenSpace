@@ -111,7 +111,7 @@ class _MapSearchPageState extends State<MapSearchPage> {
           15,
         ),
       );
-    };
+    }
   }
 
   @override
