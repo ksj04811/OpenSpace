@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:flutter_tutorial/widgets/map_view.dart';
-
+import 'package:flutter_tutorial/widgets/voice_button.dart';
+import 'package:flutter_tutorial/widgets/search_bar.dart';
 
 class MapSearchPage extends StatefulWidget {
   const MapSearchPage({super.key});
@@ -15,12 +15,8 @@ class MapSearchPage extends StatefulWidget {
 }
 
 class _MapSearchPageState extends State<MapSearchPage> {
-  final SpeechToText _speech = SpeechToText();
   final TextEditingController _controller = TextEditingController();
   final MapController _mapController = MapController();
-
-  bool _isListening = false;
-  String _statusText = "음성 입력 준비";
 
   LatLng? _currentPosition;
   List<Marker> _markers = [];
@@ -61,43 +57,14 @@ class _MapSearchPageState extends State<MapSearchPage> {
           child: const Icon(
             Icons.my_location,
             color: Colors.blue,
-             size: 40,
+            size: 40,
           ),
         ),
       ];
 
-
       // 지도 중심 이동
       _mapController.move(_currentPosition!, 17);
     });
-  }
-
-  /// 음성 인식 시작
-  Future<void> _startListening() async {
-    bool available = await _speech.initialize(
-      onStatus: (status) {
-        setState(() => _statusText = "상태: $status");
-      },
-      onError: (error) {
-        setState(() => _statusText = "오류: ${error.errorMsg}");
-      },
-    );
-
-    if (available) {
-      setState(() => _isListening = true);
-      await _speech.listen(
-        localeId: "ko_KR",
-        onResult: (result) {
-          setState(() => _controller.text = result.recognizedWords);
-        },
-      );
-    }
-  }
-
-  /// 음성 인식 중지
-  void _stopListening() {
-    _speech.stop();
-    setState(() => _isListening = false);
   }
 
   /// 검색 실행 (임시: 서울 중심 이동)
@@ -121,44 +88,26 @@ class _MapSearchPageState extends State<MapSearchPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // 검색창
-            Semantics(
-              textField: true,
-              label: "목적지 입력창",
-              hint: "음성 또는 키보드로 목적지를 입력할 수 있습니다",
-              child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "목적지를 입력하세요",
-                ),
-              ),
+            // 🔹 검색창
+            CustomSearchBar(
+              controller: _controller,
+              hint: "목적지를 입력하세요"
             ),
             const SizedBox(height: 12),
 
-            // 음성 입력 버튼
-            Semantics(
-              button: true,
-              label: _isListening
-                  ? "음성 입력 중지 버튼"
-                  : "음성으로 목적지 입력 버튼",
-              hint: "두 번 탭하면 음성 입력을 시작/중지합니다",
-              child: ElevatedButton(
-                onPressed: _isListening ? _stopListening : _startListening,
-                child: Text(_isListening ? "듣는 중..." : "음성 입력 시작"),
-              ),
+            // 음성 입력 버튼 (VoiceButton 사용)
+            VoiceButton(
+              onResult: (text) {
+                setState(() {
+                  _controller.text = text; // 음성 인식 결과를 검색창에 반영
+                });
+              },
             ),
-            const SizedBox(height: 12),
 
-            // 검색 실행 버튼
-            Semantics(
-              button: true,
-              label: "검색 실행 버튼",
-              hint: "두 번 탭하면 입력한 목적지로 검색을 시작합니다",
-              child: ElevatedButton(
-                onPressed: _searchDestination,
-                child: const Text("검색 시작"),
-              ),
+            // 🔹 검색 실행 버튼
+            ElevatedButton(
+              onPressed: _searchDestination,
+              child: const Text("검색 시작"),
             ),
             const SizedBox(height: 16),
 
