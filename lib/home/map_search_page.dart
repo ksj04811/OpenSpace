@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'map_view.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapSearchPage extends StatefulWidget {
   const MapSearchPage({super.key});
@@ -14,13 +14,13 @@ class MapSearchPage extends StatefulWidget {
 class _MapSearchPageState extends State<MapSearchPage> {
   final SpeechToText _speech = SpeechToText();
   final TextEditingController _controller = TextEditingController();
-  final MapController _mapController = MapController();
 
   bool _isListening = false;
   String _statusText = "음성 입력 준비";
 
+  GoogleMapController? _mapController;
   LatLng? _currentPosition;
-  List<Marker> _markers = [];
+  Set<Marker> _markers = {};
 
   @override
   void initState() {
@@ -49,24 +49,23 @@ class _MapSearchPageState extends State<MapSearchPage> {
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
 
-      // Flutter_map 6.1.0 호환 마커
-      _markers = [
+      _markers = {
         Marker(
-          point: _currentPosition!,
-          width: 40,
-          height: 40,
-          child: const Icon(
-            Icons.my_location,
-            color: Colors.blue,
-             size: 40,
+          markerId: const MarkerId('current_location'),
+          position: _currentPosition!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueBlue,
           ),
         ),
-      ];
+      };
+    });
 
 
       // 지도 중심 이동
-      _mapController.move(_currentPosition!, 17);
-    });
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(_currentPosition!, 17),
+    );
+
   }
 
   /// 음성 인식 시작
@@ -106,7 +105,12 @@ class _MapSearchPageState extends State<MapSearchPage> {
       );
 
       // 임시로 지도 이동
-      _mapController.move(LatLng(37.5665, 126.9780), 15.0);
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          const LatLng(37.5665, 126.9780),
+          15,
+        ),
+      );
     }
   }
 
@@ -161,25 +165,15 @@ class _MapSearchPageState extends State<MapSearchPage> {
 
             // 지도
             Expanded(
-              child: FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  center: _currentPosition ?? LatLng(37.5665, 126.9780),
-                  zoom: 15.0,
-                  interactiveFlags: InteractiveFlag.all,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.yourapp',
-                  ),
-
-                  // Flutter_map 6.1.0 호환 MarkerLayer
-                  if (_markers.isNotEmpty) MarkerLayer(markers: _markers),
-                ],
+              child: MapView(
+                center: _currentPosition ?? const LatLng(37.5665, 126.9780),
+                markers: _markers,
+                onMapCreated: (controller) {
+                  _mapController = controller;
+                },
               ),
             ),
+
           ],
         ),
       ),
