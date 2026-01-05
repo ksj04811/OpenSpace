@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:flutter_tutorial/widgets/map_view.dart';
 import 'package:flutter_tutorial/widgets/voice_button.dart';
+import 'package:flutter_tutorial/widgets/search_bar.dart';
 
 class MapSearchPage extends StatefulWidget {
   const MapSearchPage({super.key});
@@ -87,18 +88,10 @@ class _MapSearchPageState extends State<MapSearchPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // 검색창 (위치 그대로)
-            Semantics(
-              textField: true,
-              label: "목적지 입력창",
-              hint: "음성 또는 키보드로 목적지를 입력할 수 있습니다",
-              child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "목적지를 입력하세요",
-                ),
-              ),
+            // 🔹 검색창
+            CustomSearchBar(
+              controller: _controller,
+              hint: "목적지를 입력하세요"
             ),
             const SizedBox(height: 12),
 
@@ -111,15 +104,10 @@ class _MapSearchPageState extends State<MapSearchPage> {
               },
             ),
 
-            // 검색 실행 버튼
-            Semantics(
-              button: true,
-              label: "검색 실행 버튼",
-              hint: "두 번 탭하면 입력한 목적지로 검색을 시작합니다",
-              child: ElevatedButton(
-                onPressed: _searchDestination,
-                child: const Text("검색 시작"),
-              ),
+            // 🔹 검색 실행 버튼
+            ElevatedButton(
+              onPressed: _searchDestination,
+              child: const Text("검색 시작"),
             ),
             const SizedBox(height: 16),
 
