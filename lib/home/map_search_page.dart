@@ -19,7 +19,7 @@ class _MapSearchPageState extends State<MapSearchPage> {
   final MapController _mapController = MapController();
 
   LatLng? _currentPosition;
-  List<Marker> _markers = [];
+  List<Marker> _markers = []; // 목적지 마커 등 필요 시 추가
 
   @override
   void initState() {
@@ -29,13 +29,10 @@ class _MapSearchPageState extends State<MapSearchPage> {
 
   /// 현재 위치 가져오기
   Future<void> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
 
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) return;
@@ -43,24 +40,11 @@ class _MapSearchPageState extends State<MapSearchPage> {
     if (permission == LocationPermission.deniedForever) return;
 
     Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+      desiredAccuracy: LocationAccuracy.high,
+    );
 
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
-
-      // Flutter_map 6.1.0 호환 마커
-      _markers = [
-        Marker(
-          point: _currentPosition!,
-          width: 40,
-          height: 40,
-          child: const Icon(
-            Icons.my_location,
-            color: Colors.blue,
-            size: 40,
-          ),
-        ),
-      ];
 
       // 지도 중심 이동
       _mapController.move(_currentPosition!, 17);
@@ -75,7 +59,7 @@ class _MapSearchPageState extends State<MapSearchPage> {
         SnackBar(content: Text("검색 실행: \"$destination\"")),
       );
 
-      // 임시로 지도 이동
+      // 임시: 지도 이동
       _mapController.move(LatLng(37.5665, 126.9780), 15.0);
     }
   }
@@ -91,11 +75,11 @@ class _MapSearchPageState extends State<MapSearchPage> {
             // 🔹 검색창
             CustomSearchBar(
               controller: _controller,
-              hint: "목적지를 입력하세요"
+              hint: "목적지를 입력하세요",
             ),
             const SizedBox(height: 12),
 
-            // 음성 입력 버튼 (VoiceButton 사용)
+            // 🔹 음성 입력 버튼
             VoiceButton(
               onResult: (text) {
                 setState(() {
@@ -103,6 +87,7 @@ class _MapSearchPageState extends State<MapSearchPage> {
                 });
               },
             ),
+            const SizedBox(height: 12),
 
             // 🔹 검색 실행 버튼
             ElevatedButton(
@@ -111,12 +96,13 @@ class _MapSearchPageState extends State<MapSearchPage> {
             ),
             const SizedBox(height: 16),
 
-            // 지도
+            // 🔹 지도
             Expanded(
               child: MapView(
                 mapController: _mapController,
                 center: _currentPosition ?? LatLng(37.5665, 126.9780),
-                markers: _markers,
+                currentPosition: _currentPosition, // MapView에서 자동 현위치 마커 표시
+                markers: _markers, // 목적지 마커 추가 가능
               ),
             ),
           ],
