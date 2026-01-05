@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:audioplayers/audioplayers.dart';
 
-/// 노란색 마이크 버튼 컴포넌트 (음성 인식 로직 포함)
+/// 음성 인식 버튼: 텍스트 전달만 담당
 class VoiceButton extends StatefulWidget {
-  final Function(String recognizedWords)? onResult; // 음성 인식 결과 전달
+  final Function(String recognizedWords)? onResult;
   final String localeId;
 
   const VoiceButton({
@@ -18,37 +19,45 @@ class VoiceButton extends StatefulWidget {
 
 class _VoiceButtonState extends State<VoiceButton> {
   final SpeechToText _speech = SpeechToText();
+  final AudioPlayer _player = AudioPlayer();
+
   bool _isListening = false;
 
   void _onPressed() async {
+    await _player.play(AssetSource('sounds/Notification4.wav'));
+
     if (_isListening) {
-      _speech.stop();
+      await _speech.stop();
       setState(() => _isListening = false);
       return;
     }
 
     bool available = await _speech.initialize(
-      onStatus: (status) {
-        // 상태 표시용 로그 필요 시
-        debugPrint("Speech Status: $status");
-      },
-      onError: (error) {
-        debugPrint("Speech Error: ${error.errorMsg}");
-      },
+      onStatus: (status) => debugPrint("Speech Status: $status"),
+      onError: (error) => debugPrint("Speech Error: ${error.errorMsg}"),
     );
 
-    if (available) {
-      setState(() => _isListening = true);
+    if (!available) return;
 
-      await _speech.listen(
-        localeId: widget.localeId,
-        onResult: (result) {
-          if (widget.onResult != null) {
-            widget.onResult!(result.recognizedWords);
-          }
-        },
-      );
-    }
+    setState(() => _isListening = true);
+
+    await _speech.listen(
+      localeId: widget.localeId,
+      pauseFor: const Duration(seconds: 3),
+      listenFor: const Duration(minutes: 1),
+      onResult: (result) {
+        if (widget.onResult != null) {
+          widget.onResult!(result.recognizedWords);
+        }
+      },
+      partialResults: false,
+    );
+
+    _speech.statusListener = (status) {
+      if (status == "notListening" && _isListening) {
+        setState(() => _isListening = false);
+      }
+    };
   }
 
   @override
