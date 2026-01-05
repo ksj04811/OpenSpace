@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:flutter_tutorial/widgets/map_view.dart';
 import 'package:flutter_tutorial/widgets/voice_button.dart';
+import 'package:flutter_tutorial/widgets/search_button.dart';
 import 'package:flutter_tutorial/widgets/search_bar.dart';
 
 class MapSearchPage extends StatefulWidget {
@@ -19,7 +20,9 @@ class _MapSearchPageState extends State<MapSearchPage> {
   final MapController _mapController = MapController();
 
   LatLng? _currentPosition;
-  List<Marker> _markers = []; // 목적지 마커 등 필요 시 추가
+  List<Marker> _markers = [];
+
+  final GlobalKey<SearchButtonState> _searchKey = GlobalKey();
 
   @override
   void initState() {
@@ -27,7 +30,6 @@ class _MapSearchPageState extends State<MapSearchPage> {
     _determinePosition();
   }
 
-  /// 현재 위치 가져오기
   Future<void> _determinePosition() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
@@ -45,23 +47,21 @@ class _MapSearchPageState extends State<MapSearchPage> {
 
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
-
-      // 지도 중심 이동
       _mapController.move(_currentPosition!, 17);
+
+      _markers = [
+        Marker(
+          point: _currentPosition!,
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            size: 40,
+          ),
+        ),
+      ];
     });
-  }
-
-  /// 검색 실행 (임시: 서울 중심 이동)
-  void _searchDestination() {
-    String destination = _controller.text.trim();
-    if (destination.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("검색 실행: \"$destination\"")),
-      );
-
-      // 임시: 지도 이동
-      _mapController.move(LatLng(37.5665, 126.9780), 15.0);
-    }
   }
 
   @override
@@ -82,17 +82,18 @@ class _MapSearchPageState extends State<MapSearchPage> {
             // 🔹 음성 입력 버튼
             VoiceButton(
               onResult: (text) {
-                setState(() {
-                  _controller.text = text; // 음성 인식 결과를 검색창에 반영
-                });
+                _controller.text = text;
+                // 자동 검색 신호
+                _searchKey.currentState?.triggerSearch();
               },
             ),
             const SizedBox(height: 12),
 
-            // 🔹 검색 실행 버튼
-            ElevatedButton(
-              onPressed: _searchDestination,
-              child: const Text("검색 시작"),
+            // 🔹 검색 버튼
+            SearchButton(
+              key: _searchKey,
+              controller: _controller,
+              mapController: _mapController,
             ),
             const SizedBox(height: 16),
 
@@ -101,8 +102,8 @@ class _MapSearchPageState extends State<MapSearchPage> {
               child: MapView(
                 mapController: _mapController,
                 center: _currentPosition ?? LatLng(37.5665, 126.9780),
-                currentPosition: _currentPosition, // MapView에서 자동 현위치 마커 표시
-                markers: _markers, // 목적지 마커 추가 가능
+                currentPosition: _currentPosition,
+                markers: _markers,
               ),
             ),
           ],
