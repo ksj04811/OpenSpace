@@ -4,6 +4,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'package:flutter_tutorial/widgets/map_view.dart';
+
+
 class MapSearchPage extends StatefulWidget {
   const MapSearchPage({super.key});
 
@@ -161,23 +164,10 @@ class _MapSearchPageState extends State<MapSearchPage> {
 
             // 지도
             Expanded(
-              child: FlutterMap(
+              child: MapView(
                 mapController: _mapController,
-                options: MapOptions(
-                  center: _currentPosition ?? LatLng(37.5665, 126.9780),
-                  zoom: 15.0,
-                  interactiveFlags: InteractiveFlag.all,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.yourapp',
-                  ),
-
-                  // Flutter_map 6.1.0 호환 MarkerLayer
-                  if (_markers.isNotEmpty) MarkerLayer(markers: _markers),
-                ],
+                center: _currentPosition ?? LatLng(37.5665, 126.9780),
+                markers: _markers,
               ),
             ),
           ],
