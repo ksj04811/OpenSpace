@@ -14,7 +14,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       // 배경색을 투명하게 (또는 원하는 색상)
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color.fromARGB(255, 0, 31, 63),
       elevation: 0, // 그림자 제거
 
       // 왼쪽: 앱 타이틀

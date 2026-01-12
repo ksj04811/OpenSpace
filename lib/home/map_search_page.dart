@@ -7,6 +7,8 @@ import 'package:flutter_tutorial/widgets/map_view.dart';
 import 'package:flutter_tutorial/widgets/voice_button.dart';
 import 'package:flutter_tutorial/widgets/search_button.dart';
 import 'package:flutter_tutorial/widgets/search_bar.dart';
+import 'package:flutter_tutorial/widgets/top_bar.dart';
+import 'package:flutter_tutorial/widgets/bottom_bar.dart';
 
 class MapSearchPage extends StatefulWidget {
   const MapSearchPage({super.key});
@@ -23,6 +25,9 @@ class _MapSearchPageState extends State<MapSearchPage> {
   List<Marker> _markers = [];
 
   final GlobalKey<SearchButtonState> _searchKey = GlobalKey();
+
+  // 🔹 BottomBar 상태 관리
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -54,60 +59,80 @@ class _MapSearchPageState extends State<MapSearchPage> {
           point: _currentPosition!,
           width: 40,
           height: 40,
-          child: const Icon(
-            Icons.my_location,
-            color: Colors.blue,
-            size: 40,
-          ),
+          child: const Icon(Icons.my_location, color: Colors.blue, size: 40),
         ),
       ];
+    });
+  }
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+      // 필요 시 페이지 전환 로직 추가 가능
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("목적지 검색")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // 🔹 검색창
-            CustomSearchBar(
-              controller: _controller,
-              hint: "목적지를 입력하세요",
-            ),
-            const SizedBox(height: 12),
+      appBar: const TopBar(),
+      body: Stack(
+        children: [
+          // 🔹 지도 전체
+          MapView(
+            mapController: _mapController,
+            center: _currentPosition ?? LatLng(37.5665, 126.9780),
+            currentPosition: _currentPosition,
+            markers: _markers,
+          ),
 
-            // 🔹 음성 입력 버튼
-            VoiceButton(
-              onResult: (text) {
-                _controller.text = text;
-                // 자동 검색 신호
-                _searchKey.currentState?.triggerSearch();
-              },
-            ),
-            const SizedBox(height: 12),
+          // 🔹 검색창 + 음성 버튼 + 검색 버튼 Row
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 8,// 하단바 바로 위
+            child: Row(
+              children: [
+                // 검색창
+                Expanded(
+                  flex: 7,
+                  child: CustomSearchBar(
+                    controller: _controller,
+                  ),
+                ),
+                const SizedBox(width: 8),
 
-            // 🔹 검색 버튼
-            SearchButton(
-              key: _searchKey,
-              controller: _controller,
-              mapController: _mapController,
-            ),
-            const SizedBox(height: 16),
+                // 음성 버튼
+                Expanded(
+                  flex: 1,
+                  child: VoiceButton(
+                    onResult: (text) {
+                      _controller.text = text;
+                      _searchKey.currentState?.triggerSearch();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
 
-            // 🔹 지도
-            Expanded(
-              child: MapView(
-                mapController: _mapController,
-                center: _currentPosition ?? LatLng(37.5665, 126.9780),
-                currentPosition: _currentPosition,
-                markers: _markers,
-              ),
+                // 검색 버튼
+                Expanded(
+                  flex: 1,
+                  child: SearchButton(
+                    key: _searchKey,
+                    controller: _controller,
+                    mapController: _mapController,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+
+      // 🔹 하단바
+      bottomNavigationBar: BottomBar(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
       ),
     );
   }
