@@ -26,8 +26,11 @@ class _MapSearchPageState extends State<MapSearchPage> {
 
   final GlobalKey<SearchButtonState> _searchKey = GlobalKey();
 
-  // 🔹 BottomBar 상태 관리
+  // 🔹 BottomBar 상태
   int _currentIndex = 0;
+
+  // 🔹 음성 인식 상태 (다음 단계용)
+  bool _isListening = false;
 
   @override
   void initState() {
@@ -59,7 +62,11 @@ class _MapSearchPageState extends State<MapSearchPage> {
           point: _currentPosition!,
           width: 40,
           height: 40,
-          child: const Icon(Icons.my_location, color: Colors.blue, size: 40),
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            size: 40,
+          ),
         ),
       ];
     });
@@ -68,7 +75,6 @@ class _MapSearchPageState extends State<MapSearchPage> {
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
-      // 필요 시 페이지 전환 로직 추가 가능
     });
   }
 
@@ -78,19 +84,19 @@ class _MapSearchPageState extends State<MapSearchPage> {
       appBar: const TopBar(),
       body: Stack(
         children: [
-          // 🔹 지도 전체
+          // 🗺️ 지도
           MapView(
             mapController: _mapController,
-            center: _currentPosition ?? LatLng(37.5665, 126.9780),
+            center: _currentPosition ?? const LatLng(37.5665, 126.9780),
             currentPosition: _currentPosition,
             markers: _markers,
           ),
 
-          // 🔹 검색창 + 음성 버튼 + 검색 버튼 Row
+          // 🔍 검색 UI Row
           Positioned(
             left: 16,
             right: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 8,// 하단바 바로 위
+            bottom: MediaQuery.of(context).padding.bottom + 8,
             child: Row(
               children: [
                 // 검색창
@@ -98,6 +104,7 @@ class _MapSearchPageState extends State<MapSearchPage> {
                   flex: 7,
                   child: CustomSearchBar(
                     controller: _controller,
+                    isListening: _isListening,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -109,6 +116,11 @@ class _MapSearchPageState extends State<MapSearchPage> {
                     onResult: (text) {
                       _controller.text = text;
                       _searchKey.currentState?.triggerSearch();
+                    },
+                    onListeningChanged: (listening) {
+                      setState(() {
+                        _isListening = listening;
+                      });
                     },
                   ),
                 ),
@@ -129,7 +141,7 @@ class _MapSearchPageState extends State<MapSearchPage> {
         ],
       ),
 
-      // 🔹 하단바
+      // ⬇️ 하단바
       bottomNavigationBar: BottomBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
