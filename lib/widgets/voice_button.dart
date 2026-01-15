@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-/// 음성 인식 버튼: 텍스트 전달만 담당
+/// 음성 인식 버튼: 텍스트 전달 + 음성 인식 상태 알림
 class VoiceButton extends StatefulWidget {
   final Function(String recognizedWords)? onResult;
+  final ValueChanged<bool>? onListeningChanged; // 🔹 추가
   final String localeId;
 
   const VoiceButton({
     super.key,
     this.onResult,
+    this.onListeningChanged,
     this.localeId = "ko_KR",
   });
 
@@ -23,12 +25,14 @@ class _VoiceButtonState extends State<VoiceButton> {
 
   bool _isListening = false;
 
-  void _onPressed() async {
+  Future<void> _onPressed() async {
     await _player.play(AssetSource('sounds/Notification4.wav'));
 
+    // 🔹 이미 듣고 있으면 중지
     if (_isListening) {
       await _speech.stop();
       setState(() => _isListening = false);
+      widget.onListeningChanged?.call(false); // 🔔 알림
       return;
     }
 
@@ -40,22 +44,22 @@ class _VoiceButtonState extends State<VoiceButton> {
     if (!available) return;
 
     setState(() => _isListening = true);
+    widget.onListeningChanged?.call(true); // 🔔 알림
 
     await _speech.listen(
       localeId: widget.localeId,
       pauseFor: const Duration(seconds: 3),
       listenFor: const Duration(minutes: 1),
-      onResult: (result) {
-        if (widget.onResult != null) {
-          widget.onResult!(result.recognizedWords);
-        }
-      },
       partialResults: false,
+      onResult: (result) {
+        widget.onResult?.call(result.recognizedWords);
+      },
     );
 
     _speech.statusListener = (status) {
       if (status == "notListening" && _isListening) {
         setState(() => _isListening = false);
+        widget.onListeningChanged?.call(false); // 🔔 알림
       }
     };
   }
